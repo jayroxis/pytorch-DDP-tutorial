@@ -1,3 +1,14 @@
+# ------------------------------ Nov 4, 2021------------------------------ 
+#
+#       Author: https://github.com/jayroxis/
+# 
+#       Modified from https://pytorch.org/docs/stable/multiprocessing.html
+#
+#       [IMPORTANT] Note that this would not work on Windows.
+#
+# -------------------------------------------------------------------------
+
+
 import os
 import sys
 import torch
@@ -9,7 +20,9 @@ import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
+
 def setup(rank, world_size):
+    # Change the MASTER_PORT in case port 12355 is in use.
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
 
@@ -128,15 +141,7 @@ def demo_model_parallel(rank, world_size, pool):
 
     cleanup()
 
-    
-    
-def run_demo(demo_fn, device_pool):
-    world_size = len(device_pool)
-    mp.spawn(demo_fn,
-             args=(world_size, device_pool),
-             nprocs=world_size,
-             join=True)
-    
+
 
     
 class ToyMpModel(nn.Module):
@@ -155,7 +160,14 @@ class ToyMpModel(nn.Module):
         return self.net2(x)
     
     
-
+    
+def run_demo(demo_fn, device_pool):
+    world_size = len(device_pool)
+    mp.spawn(demo_fn,
+             args=(world_size, device_pool),
+             nprocs=world_size,
+             join=True)
+    
 
 if __name__ == "__main__":
     n_gpus = torch.cuda.device_count()
