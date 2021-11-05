@@ -32,6 +32,7 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 
+    
 def demo_basic(rank, world_size, pool):
     device_ids = pool[rank]
     print(f"Running basic DDP example on device {device_ids}.")
@@ -58,13 +59,6 @@ def demo_basic(rank, world_size, pool):
     cleanup()
 
 
-def run_demo(demo_fn, device_pool):
-    world_size = len(device_pool)
-    mp.spawn(demo_fn,
-             args=(world_size, device_pool),
-             nprocs=world_size,
-             join=True)
-    
     
 def demo_checkpoint(rank, world_size, pool):
     process_id = rank
@@ -110,23 +104,6 @@ def demo_checkpoint(rank, world_size, pool):
     cleanup()
     
     
-    
-class ToyMpModel(nn.Module):
-    def __init__(self, dev0, dev1):
-        super(ToyMpModel, self).__init__()
-        self.dev0 = dev0
-        self.dev1 = dev1
-        self.net1 = torch.nn.Linear(10, 10).to(dev0)
-        self.relu = torch.nn.ReLU()
-        self.net2 = torch.nn.Linear(10, 5).to(dev1)
-
-    def forward(self, x):
-        x = x.to(self.dev0)
-        x = self.relu(self.net1(x))
-        x = x.to(self.dev1)
-        return self.net2(x)
-    
-    
 def demo_model_parallel(rank, world_size, pool):
     process_id = rank
     rank = pool[rank]
@@ -150,6 +127,34 @@ def demo_model_parallel(rank, world_size, pool):
     optimizer.step()
 
     cleanup()
+
+    
+    
+def run_demo(demo_fn, device_pool):
+    world_size = len(device_pool)
+    mp.spawn(demo_fn,
+             args=(world_size, device_pool),
+             nprocs=world_size,
+             join=True)
+    
+
+    
+class ToyMpModel(nn.Module):
+    def __init__(self, dev0, dev1):
+        super(ToyMpModel, self).__init__()
+        self.dev0 = dev0
+        self.dev1 = dev1
+        self.net1 = torch.nn.Linear(10, 10).to(dev0)
+        self.relu = torch.nn.ReLU()
+        self.net2 = torch.nn.Linear(10, 5).to(dev1)
+
+    def forward(self, x):
+        x = x.to(self.dev0)
+        x = self.relu(self.net1(x))
+        x = x.to(self.dev1)
+        return self.net2(x)
+    
+    
 
 
 if __name__ == "__main__":
