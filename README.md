@@ -35,3 +35,31 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 ```
+
+# Basic Demo
+```python
+def demo_basic(rank, world_size, pool):
+    device_ids = pool[rank]
+    print(f"Running basic DDP example on device {device_ids}.")
+    setup(rank, world_size)
+    
+    print(f"Create model on {device_ids}.")
+    # create model and move it to GPU with id rank
+    
+    model = ToyModel().to(device_ids)
+    print(f"DDP model on {device_ids}.")
+    ddp_model = DDP(model, device_ids=[device_ids])
+    
+    print(f"Training on {device_ids}.")
+    loss_fn = nn.MSELoss()
+    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+
+    optimizer.zero_grad()
+    outputs = ddp_model(torch.randn(20, 10))
+    labels = torch.randn(20, 5).to(device_ids)
+    loss_fn(outputs, labels).backward()
+    optimizer.step()
+    
+    print(f"Finish on {device_ids}.")
+    cleanup()
+```
